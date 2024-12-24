@@ -53,6 +53,12 @@ class MainFrame; // to shut the compiler up
 class DoubleEdit;
 class MinTextEdit;
 class LinePickerWt;
+namespace RpcLibAdapters{   // forward declration of custom types.
+
+    class AnalysisSettings2D;
+    class XDirectDisplayState;
+}
+
 
 /**
 * @class XDirect
@@ -76,6 +82,7 @@ class XDirect : public QWidget
     friend class XDirectTileWidget;
     friend class XFoilAnalysisDlg;
     friend class FoilTreeView;
+    friend class xflServer;
 
     Q_OBJECT
 
@@ -108,6 +115,18 @@ class XDirect : public QWidget
 
         static bool bKeepOpenOnErrors() {return s_bKeepOpenErrors;}
         static void setKeepOpenOnErrors(bool b) {s_bKeepOpenErrors=b;}
+
+        // Headless getters for rpc
+        xfl::enumGraphView iPlrView() const {return m_iPlrView;}
+        int iPlrGraph() const {return m_iPlrGraph;}
+        bool bCurOppOnly() const {return m_bCurOppOnly;}
+        bool bShowInviscid() const {return m_bShowInviscid;}
+        bool bCpGraph() const {return m_bCpGraph;}
+        bool bActiveOppOnly() const {return m_pchActiveOppOnly->isChecked();}
+        bool bShowBL() const {return m_pchShowBL->isChecked();}
+        bool bShowPressure() const {return m_pchShowPressure->isChecked();}
+        int slAnimateSpeed() const {return m_pslAnimateSpeed->value();}
+        bool bAnimate() const {return m_bAnimate;}
 
     signals:
         void projectModified();
@@ -218,6 +237,11 @@ class XDirect : public QWidget
         OpPoint *setOpp(OpPoint *pOpp);
         OpPoint *setOpp(double Alpha=-123456789.0);
 
+        // Server headless slots
+        void onDefinePolarHeadless(Polar* polar, Foil* foil);
+        void onSetAnalysisSettings2DHeadless(RpcLibAdapters::AnalysisSettings2D* analysis_settings);
+        void onSelectPolarHeadless(Polar* pPolar);
+        void onSetDisplayHeadless(RpcLibAdapters::XDirectDisplayState* dsp_state);
 
 
     private:

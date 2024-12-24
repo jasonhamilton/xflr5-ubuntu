@@ -64,6 +64,7 @@ class XDirectTileWidget;
 class XInverse;
 class gl3dMiarexView;
 class InverseViewWt;
+class xflServer;
 
 /**
 *@class MainFrame
@@ -85,6 +86,7 @@ class MainFrame : public QMainWindow
     friend class gl3dMiarexView;
     friend class PlaneTreeView;
     friend class FoilTreeView;
+    friend class xflServer; // needed to access some private slots
 
     Q_OBJECT
 
@@ -147,6 +149,10 @@ class MainFrame : public QMainWindow
         void onSaveTimer();
         void onSaveViewToImageFile();
         void onSetNoApp();
+
+        // Headless slots
+        void onNewProjectHeadless();
+        void onLoadFileHeadless(QStringList fileNames);
 
     private:
         void keyPressEvent(QKeyEvent *pEvent) override;

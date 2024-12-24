@@ -68,6 +68,7 @@ class AFoil : public QFrame
     friend class LECircleDlg;
     friend class FoilCoordDlg;
     friend class CAddDlg;
+    friend class xflServer;
 
     public:
         AFoil(QWidget *parent = nullptr);
@@ -76,6 +77,7 @@ class AFoil : public QFrame
         void setupLayout();
         void initDialog(FoilDesignWt *p2DWidget, XFoil *pXFoil);
 
+        Foil* addNewFoilHeadless(Foil* foil, QString name);
     signals:
         void projectModified();
 
@@ -117,6 +119,16 @@ class AFoil : public QFrame
         void onStoreSplines();
         void onSplinesModified();
         void onUndo();
+
+        // Headless slots for API
+        void onAFoilFoilGeomHeadless(Foil* foil, QString name);
+        void onAFoilNacaFoilsHeadless(int s_Digits, QString name);
+        Foil* onDuplicateHeadless(Foil* foil, QString toName);
+        void onRenameFoilHeadless(Foil* foil, QString name);
+        void onShowFoilHeadless(Foil* foil, bool flag);
+        void onDeleteFoilHeadless(Foil* foil);
+        void onFoilStyleHeadless(Foil* pFoil, LineStyle ls);
+        void onExportFoilHeadless(Foil* pFoil, QString FileName);
 
     private:
         Foil* addNewFoil(Foil *pFoil);

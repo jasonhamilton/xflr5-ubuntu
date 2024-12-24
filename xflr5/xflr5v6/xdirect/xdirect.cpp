@@ -66,6 +66,7 @@
 #include <xflwidgets/line/linedelegate.h>
 #include <xflwidgets/line/linepickerwt.h>
 #include <xinverse/foilselectiondlg.h>
+#include <xflserver/RpcLibAdapters.h>
 
 
 bool XDirect::s_bAlpha = true;
@@ -4442,3 +4443,117 @@ void XDirect::onOptim2d()
     updateView();
 }
 
+
+/**
+ * The client has requested to define a new polar
+ */
+void XDirect::onDefinePolarHeadless(Polar* pPolar, Foil* pFoil)
+{
+    if(!pFoil) return;
+    setCurFoil(pFoil);
+    setCurPolar(pPolar);
+
+    if (pPolar->name()== "")
+        pPolar->setAutoPolarName();
+
+    if(DisplayOptions::isAlignedChildrenStyle())
+    {
+        Objects2d::curPolar()->setTheStyle(pFoil->theStyle());
+    }
+    else
+    {
+        QColor clr = xfl::randomColor(!DisplayOptions::isLightTheme());
+        Objects2d::curPolar()->setColor(clr.red(), clr.green(), clr.blue(), clr.alpha());
+    }
+
+    Objects2d::curPolar()->setVisible(true);
+    Objects2d::curPolar()->copySpecification(pPolar);
+
+    Objects2d::addPolar(Objects2d::curPolar());
+    setPolar(Objects2d::curPolar());
+
+    m_pFoilTreeView->insertPolar(Objects2d::curPolar());
+    m_pFoilTreeView->selectPolar(Objects2d::curPolar());
+    updateView();
+    emit projectModified();
+
+    setControls();
+}
+
+void XDirect::onSetAnalysisSettings2DHeadless(RpcLibAdapters::AnalysisSettings2D* analysis_settings){
+    m_pchInitBL->setChecked(analysis_settings->init_BL);
+
+    m_pchStoreOpp->setChecked(analysis_settings->store_opp);
+    onStoreOpp();
+
+    m_pchSequence->setChecked(analysis_settings->is_sequence);
+    onSequence();
+    m_pdeAlphaMin->setValue(analysis_settings->sequence.start);
+    m_pdeAlphaMax->setValue(analysis_settings->sequence.end);
+    m_pdeAlphaDelta->setValue(analysis_settings->sequence.delta);
+
+    switch (analysis_settings->sequence_type)
+    {
+    case 0:
+        m_prbSpec1->setChecked(true);
+        break;
+    case 1:
+        m_prbSpec2->setChecked(true);
+        break;
+    case 2:
+        m_prbSpec3->setChecked(true);
+        break;
+    default:
+        break;
+    }
+    onSpec();
+
+    m_pchViscous->setChecked(analysis_settings->viscous);
+    onViscous();
+
+    s_bKeepOpenErrors = analysis_settings->keep_open_on_error;
+}
+
+void XDirect::onSelectPolarHeadless(Polar* pPolar){
+    if (!pPolar) return;
+    m_pFoilTreeView->selectPolar(pPolar);
+    updateView();
+}
+
+void XDirect::onSetDisplayHeadless(RpcLibAdapters::XDirectDisplayState* dsp_state){
+    // argument is a pointer to allow forward declarations in header files and be consistent
+    // with already existing polar and foil pointers as arguments
+    // any custom adapter should be passed as pointer and forward declared in the namespace
+    //  at the top of the header file.
+
+    m_bPolarView = dsp_state->polar_view;
+
+    if (m_bPolarView){
+        m_iPlrGraph = dsp_state->which_graph;
+        m_iPlrView  = dsp_state->graph_view;
+
+
+    }
+    else {
+        if (dsp_state->show_cpgraph) onCpGraph();
+        else onQGraph();
+
+        m_pOpPointWidget->onShowBL(dsp_state->show_bl);
+        m_pchShowBL->setChecked(dsp_state->show_bl); // not present in setControls
+
+        m_pOpPointWidget->onShowPressure(dsp_state->show_pressure);
+        m_pchShowPressure->setChecked(dsp_state->show_pressure); // not present in setControls
+
+        m_bCurOppOnly = dsp_state->active_opp_only;
+
+        setControls(); // need one of these here for animation
+
+        onAnimate(dsp_state->animated);
+        m_pchAnimate->setChecked(dsp_state->animated);
+        m_pslAnimateSpeed->setSliderPosition(dsp_state->ani_speed);
+        onAnimateSpeed(dsp_state->ani_speed);
+    }
+    setGraphTiles();
+    setControls();
+    updateView();
+}

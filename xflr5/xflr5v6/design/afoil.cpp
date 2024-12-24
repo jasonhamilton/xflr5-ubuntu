@@ -1633,3 +1633,147 @@ void AFoil::initDialog(FoilDesignWt *p2DWidget, XFoil *pXFoil)
     m_p2dWidget->setObjects(m_pBufferFoil, m_pSF);
 }
 
+Foil* AFoil::addNewFoilHeadless(Foil *pFoil, QString newName){
+
+    if(!pFoil) return nullptr;
+
+    pFoil->setName(newName);
+    Objects2d::insertThisFoil(pFoil);
+    emit projectModified();
+    return pFoil;
+}
+
+void AFoil::onAFoilFoilGeomHeadless(Foil* pFoil, QString newName){
+
+    FoilGeomDlg fgeDlg(s_pMainFrame);
+    fgeDlg.m_pMemFoil    = XDirect::curFoil();
+    fgeDlg.m_pBufferFoil = pFoil;
+    fgeDlg.initDialog();
+    fgeDlg.applyHeadless(pFoil);
+    if(addNewFoilHeadless(pFoil, newName))
+    {
+        fillFoilTable();
+        selectFoil(pFoil);
+    }
+    else
+    {
+        delete pFoil;
+    }
+    m_p2dWidget->update();
+    // s_pMainFrame->update();
+}
+
+/**
+ * Creates a new NACA foil with:
+ * @param s_Digits NACA airfoil digits (4/5).
+ * @param name Airfoil name.
+ */
+void AFoil::onAFoilNacaFoilsHeadless(int s_Digits, QString name){
+    NacaFoilDlg nacaDlg(s_pMainFrame);
+    nacaDlg.m_pBufferFoil = m_pBufferFoil;
+    nacaDlg.s_Digits = s_Digits;
+    nacaDlg.onOK();     // mimics the acceptance signal
+
+    //then duplicate the buffer foil and add it
+    QString str;
+
+    if(nacaDlg.s_Digits>0 && log10(double(nacaDlg.s_Digits))<4)
+        str = QString("%1").arg(nacaDlg.s_Digits,4,10,QChar('0'));
+    else
+        str = QString("%1").arg(nacaDlg.s_Digits);
+
+    Foil *pNewFoil    = new Foil();
+    pNewFoil->copyFoil(m_pBufferFoil);
+    xfl::setRandomFoilColor(pNewFoil, !DisplayOptions::isLightTheme());
+    pNewFoil->setLineStipple(Line::SOLID);
+    pNewFoil->setLineWidth(1);
+    pNewFoil->setPointStyle(Line::NOSYMBOL);
+
+    if(addNewFoilHeadless(pNewFoil, name))
+    {
+        fillFoilTable();
+        selectFoil(pNewFoil);
+    }
+    else delete pNewFoil;
+
+    setControls();
+    m_pBufferFoil->setVisible(false);
+    m_p2dWidget->update();
+}
+
+Foil* AFoil::onDuplicateHeadless(Foil* fromFoil, QString toName) {
+
+    if(!fromFoil) return nullptr;
+    Foil *pNewFoil = new Foil;
+    pNewFoil->copyFoil(fromFoil);
+    xfl::setRandomFoilColor(pNewFoil, !DisplayOptions::isLightTheme());
+    pNewFoil->initFoil();
+
+    addNewFoilHeadless(pNewFoil, toName);
+    fillFoilTable();
+    selectFoil(pNewFoil);
+    return pNewFoil;
+}
+
+
+/**
+ * The client has requested to rename the Foil object
+ */
+void AFoil::onRenameFoilHeadless(Foil* pFoil, QString newName){
+
+    if(!pFoil) return;
+    Objects2d::renameThisFoil(pFoil, newName);
+
+    fillFoilTable();
+    m_p2dWidget->update();
+}
+
+void AFoil::onShowFoilHeadless(Foil* foil, bool flag){
+    if (!foil) return;
+    showFoil(foil, flag);
+    m_p2dWidget->update();
+}
+
+/**
+ * The client has requested the deletion of the Foil object.
+ */
+void AFoil::onDeleteFoilHeadless(Foil* pFoil){
+
+    if(!pFoil) return;
+    Foil*pNextFoil = Objects2d::deleteFoil(pFoil);
+
+    fillFoilTable();
+    selectFoil(pNextFoil);
+    m_p2dWidget->update();
+    emit projectModified();
+}
+/**
+ * The client has requested an edition of the style of a Foil.
+ */
+void AFoil::onFoilStyleHeadless(Foil* pFoil, LineStyle ls){
+
+    pFoil->setTheStyle(ls);
+
+    if(DisplayOptions::isAlignedChildrenStyle())
+        Objects2d::setFoilChildrenStyle(pFoil);
+
+    m_p2dWidget->update();
+    emit projectModified();
+    setControls();
+    s_pMainFrame->update();  // needed to update the style in the table
+}
+
+/**
+ * The client has requested the export of the Foil to a text file.
+ */
+void AFoil::onExportFoilHeadless(Foil* pFoil, QString FileName){
+
+    if(!pFoil)    return;
+    QFile XFile(FileName);
+
+    if (!XFile.open(QIODevice::WriteOnly | QIODevice::Text)) return;
+    QTextStream out(&XFile);
+
+    Objects2d::curFoil()->exportFoil(out);
+    XFile.close();
+}
