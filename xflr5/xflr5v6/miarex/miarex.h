@@ -246,6 +246,7 @@ class Miarex : public QWidget
         void exportAVLWing_Old(Wing *pWing, QTextStream &out, int index, double y, double Thetay);
         void exportAVLWing(Wing *pWing, QTextStream &out, int index, double y, double Thetay);
         void exportToTextStream(const WPolar *pWPolar, QTextStream &out, xfl::enumTextFileType FileType, bool bDataOnly=false);
+        void exportToJSONStream(const WPolar *pWPolar, QTextStream &out, bool bDataOnly=false);
         void fillWPlrCurve(Curve *pCurve, const WPolar *pWPolar, int XVar, int YVar);
         void fillWOppCurve(WingOpp const*pWOpp, Graph *pGraph, Curve *pCurve);
         void fillStabCurve(Curve *pCurve, WPolar const *pWPolar, int iMode);

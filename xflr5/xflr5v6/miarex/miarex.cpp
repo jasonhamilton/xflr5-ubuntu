@@ -4190,7 +4190,7 @@ void Miarex::onExportCurWPolar()
     if (!XFile.open(QIODevice::WriteOnly | QIODevice::Text)) return;
 
     QTextStream out(&XFile);
-    exportToTextStream(m_pCurWPolar, out, Settings::s_ExportFileType);
+    exportToJSONStream(m_pCurWPolar, out);
     XFile.close();
 
     updateView();
@@ -4221,7 +4221,7 @@ void Miarex::onExportWPolars()
         if (XFile.open(QIODevice::WriteOnly | QIODevice::Text))
         {
             out.setDevice(&XFile);
-            exportToTextStream(pWPolar, out, Settings::s_ExportFileType);
+            exportToJSONStream(pWPolar, out);
             XFile.close();
         }
         else
@@ -8275,6 +8275,647 @@ void Miarex::exportToTextStream(WPolar const *pWPolar, QTextStream &out, xfl::en
     }
     out << "\n\n";
 }
+
+
+/**
+ * Exports the data of the polar to a text stream of JSON DATA
+ * @param out the instance of output QTextStream
+ * @param FileType TXT if the data is separated by spaces, CSV for a comma separator
+ * @param bDataOnly true if the analysis parameters should not be output
+ */
+
+
+void Miarex::exportToJSONStream(WPolar const *pWPolar, QTextStream &out, bool bDataOnly)
+{
+    QString strong, str;
+    Plane *pPlane = Objects3d::getPlane(pWPolar->planeName());
+    Wing *pWing = pPlane->wing();
+
+    out << "{\n";
+
+        if(!bDataOnly)
+        {
+
+            out << "  \"analysis\":{\n";
+            out << "    \"XflrVersion\"       : \""+ xfl::versionName() + "\",\n";
+            out << "    \"PolarName\"         : \""+ pWPolar->polarName() + "\",\n";
+            out << QString("    \"Points\"            : %1,\n").arg(double(pWPolar->dataSize()),3,'f',0);
+            out << QString("    \"AlphaSpec\"         : %1,\n").arg(pWPolar->m_AlphaSpec,8,'f',4);
+            out << QString("    \"BankAngle\"         : %1,\n").arg(pWPolar->m_BankAngle,8,'f',4);
+            out << QString("    \"BetaSpec\"          : %1,\n").arg(pWPolar->m_BetaSpec,8,'f',4);
+            out << QString("    \"CoGIxx\"            : %1,\n").arg(pWPolar->m_CoGIxx,8,'f',4);
+            out << QString("    \"CoGIxz\"            : %1,\n").arg(pWPolar->m_CoGIxz,8,'f',4);
+            out << QString("    \"CoGIyy\"            : %1,\n").arg(pWPolar->m_CoGIyy,8,'f',4);
+            out << QString("    \"CoGIzz\"            : %1,\n").arg(pWPolar->m_CoGIzz,8,'f',4);
+            out << QString("    \"Height\"            : %1,\n").arg(pWPolar->m_Height,8,'f',4);
+            out << QString("    \"QInfSpec\"          : %1,\n").arg(pWPolar->m_QInfSpec,8,'f',4);
+            out << QString("    \"TotalWakeLength\"   : %1,\n").arg(pWPolar->m_TotalWakeLength,8,'f',4);
+            out << QString("    \"WakePanelFactor\"   : %1,\n").arg(pWPolar->m_WakePanelFactor,8,'f',4);
+            // out << QString("    \"XNeutralPoint\"     : %1,\n").arg(pWPolar->m_XNeutralPoint,8,'f',4);
+            out << QString("    \"NXWakePanels\"      : %1,\n").arg(double(pWPolar->m_NXWakePanels),3,'f',0);
+            out << QString("    \"nControls\"         : %1,\n").arg(double(pWPolar->m_nControls),3,'f',0);
+            out << QString("    \"CoGx\"              : %1,\n").arg(pWPolar->CoG().x,8,'f',4);
+            out << QString("    \"CoGy\"              : %1,\n").arg(pWPolar->CoG().y,8,'f',4);
+            out << QString("    \"CoGz\"              : %1,\n").arg(pWPolar->CoG().z,8,'f',4);
+            out << QString("    \"density\"           : %1,\n").arg(pWPolar->density(),8,'f',4);
+            out << QString("    \"viscosity\"         : %1,\n").arg(pWPolar->viscosity(),8,'f',4);
+            out << QString("    \"referenceArea\"     : %1,\n").arg(pWPolar->referenceArea(),8,'f',4);
+            out << QString("    \"referenceSpan\"     : %1,\n").arg(pWPolar->referenceSpan(),8,'f',4);
+            out << QString("    \"referenceMAC\"      : %1,\n").arg(pWPolar->referenceMAC(),8,'f',4);
+            out << QString("    \"referenceGChord\"   : %1,\n").arg(pWPolar->referenceGChord(),8,'f',4);
+            out << QString("    \"velocity\"          : %1,\n").arg(pWPolar->velocity(),8,'f',4);
+            out << QString("    \"Alpha\"             : %1,\n").arg(pWPolar->Alpha(),8,'f',4);
+            out << QString("    \"Beta\"              : %1,\n").arg(pWPolar->Beta(),8,'f',4);
+            out << QString("    \"Phi\"               : %1,\n").arg(pWPolar->Phi(),8,'f',4);
+            out << QString("    \"mass\"              : %1,\n").arg(pWPolar->mass(),8,'f',4);
+            out << QString("    \"groundHeight\"      : %1,\n").arg(pWPolar->groundHeight(),8,'f',4);
+            out << QString("    \"polarFormat\"      : %1,\n").arg(double(pWPolar->polarFormat()),3,'f',0);
+
+
+            Units::getSpeedUnitLabel(str);
+            strong = QString("    \"FreestreamSpeed\"   : %1,\n").arg(pWPolar->velocity()*Units::mstoUnit(),5,'f',1);
+            out << strong;
+
+            switch (pWPolar->polarType())
+            {
+                case xfl::FIXEDSPEEDPOLAR:
+                {
+                    out << "    \"polarType\"         : \"FIXEDSPEEDPOLAR\",\n";
+                    break;
+                }
+                case xfl::FIXEDLIFTPOLAR:
+                {
+                    out << "    \"polarType\"         : \"FIXEDLIFTPOLAR\",\n";
+                    break;
+                }
+                case xfl::RUBBERCHORDPOLAR:
+                {
+                    out << "    \"polarType\"         : \"RUBBERCHORDPOLAR\",\n";
+                    break;
+                }
+                case xfl::FIXEDAOAPOLAR:
+                {
+                    out << "    \"polarType\"         : \"FIXEDAOAPOLAR\",\n";
+                    break;
+                }
+                case xfl::STABILITYPOLAR:
+                {
+                    out << "    \"polarType\"         : \"STABILITYPOLAR\",\n";
+                    break;
+                }
+                case xfl::BETAPOLAR:
+                {
+                    out << "    \"polarType\"         : \"BETAPOLAR\",\n";
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+            switch (pWPolar->analysisMethod())
+            {
+                case xfl::LLTMETHOD:
+                {
+                    out << "    \"analysisMethod\"    : \"LLTMETHOD\",\n";
+                    break;
+                }
+                case xfl::VLMMETHOD:
+                {
+                    out << "    \"analysisMethod\"    : \"VLMMETHOD\",\n";
+                    break;
+                }
+                case xfl::PANEL4METHOD:
+                {
+                    out << "    \"analysisMethod\"    : \"PANEL4METHOD\",\n";
+                    break;
+                }
+                case xfl::TRILINMETHOD:
+                {
+                    out << "    \"analysisMethod\"    : \"TRILINMETHOD\",\n";
+                    break;
+                }
+                case xfl::TRIUNIMETHOD:
+                {
+                    out << "    \"analysisMethod\"    : \"TRIUNIMETHOD\",\n";
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+            switch (pWPolar->boundaryCondition())
+            {
+                case xfl::DIRICHLET:
+                {
+                    out << "    \"boundaryCondition\" : \"DIRICHLET\",\n";
+                    break;
+                }
+                case xfl::NEUMANN:
+                {
+                    out << "    \"boundaryCondition\" : \"NEUMANN\",\n";
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+
+            switch (pWPolar->referenceDim())
+            {
+                case xfl::PLANFORMREFDIM:
+                {
+                    out << "    \"referenceDim\"      : \"PLANFORMREFDIM\",\n";
+                    break;
+                }
+                case xfl::PROJECTEDREFDIM:
+                {
+                    out << "    \"referenceDim\"      : \"PROJECTEDREFDIM\",\n";
+                    break;
+                }
+                case xfl::MANUALREFDIM:
+                {
+                    out << "    \"referenceDim\"      : \"MANUALREFDIM\",\n";
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+
+
+            if(pWPolar->m_bAutoInertia){
+                out << "    \"Autolnertia\"       : true,\n";}
+            else{
+                out << "    \"Autolnertia\"       : false,\n";
+            }
+            if(pWPolar->m_bRelaxWake){
+                out << "    \"RelaxWake\"         : true,\n";
+            }
+            else{
+                out << "    \"RelaxWake\"         : false,\n";
+            }
+            if(pWPolar->isLLTMethod()){
+                out << "    \"isLLTMethod\"       : true,\n";
+            }
+            else{
+                out << "    \"isLLTMethod\"       : false,\n";
+            }
+            if(pWPolar->isVLMMethod()){
+                out << "    \"isVLMMethod\"       : true,\n";
+            }
+            else{
+                out << "    \"isVLMMethod\"       : false,\n";
+            }
+            if(pWPolar->isPanel4Method()){
+                out << "    \"isPanel4Method\"    : true,\n";
+            }
+            else{
+                out << "    \"isPanel4Method\"    : false,\n";
+            }
+            if(pWPolar->isQuadMethod()){
+                out << "    \"isQuadMethod\"      : true,\n";
+            }
+            else{
+                out << "    \"isQuadMethod\"      : false,\n";
+            }
+            if(pWPolar->isTriCstMethod()){
+                out << "    \"isTriCstMethod\"    : true,\n";
+            }
+            else{
+                out << "    \"isTriCstMethod\"    : false,\n";
+            }
+            if(pWPolar->isTriLinearMethod()){
+                out << "    \"isTriLinearMethod\" : true,\n";
+            }
+            else{
+                out << "    \"isTriLinearMethod\" : false,\n";
+            }
+            if(pWPolar->isTriangleMethod()){
+                out << "    \"isTriangleMethod\"  : true,\n";
+            }
+            else{
+                out << "    \"isTriangleMethod\"  : false,\n";
+            }
+            if(pWPolar->isFixedSpeedPolar()){
+                out << "    \"isFixedSpeedPolar\" : true,\n";
+            }
+            else{
+                out << "    \"isFixedSpeedPolar\" : false,\n";
+            }
+            if(pWPolar->isFixedLiftPolar()){
+                out << "    \"isFixedLiftPolar\"  : true,\n";
+            }
+            else{
+                out << "    \"isFixedLiftPolar\"  : false,\n";
+            }
+            if(pWPolar->isFixedaoaPolar()){
+                out << "    \"isFixedaoaPolar\"   : true,\n";
+            }
+            else{
+                out << "    \"isFixedaoaPolar\"   : false,\n";
+            }
+            if(pWPolar->isStabilityPolar()){
+                out << "    \"isStabilityPolar\"  : true,\n";
+            }
+            else{
+                out << "    \"isStabilityPolar\"  : false,\n";
+            }
+            if(pWPolar->isBetaPolar()){
+                out << "    \"isBetaPolar\"       : true,\n";
+            }
+            else{
+                out << "    \"isBetaPolar\"       : false,\n";
+            }
+            if(pWPolar->isT1Polar()){
+                out << "    \"isT1Polar\"         : true,\n";
+            }
+            else{
+                out << "    \"isT1Polar\"         : false,\n";
+            }
+            if(pWPolar->isT2Polar()){
+                out << "    \"isT2Polar\"         : true,\n";
+            }
+            else{
+                out << "    \"isT2Polar\"         : false,\n";
+            }
+            if(pWPolar->isT12Polar()){
+                out << "    \"isT12Polar\"        : true,\n";
+            }
+            else{
+                out << "    \"isT12Polar\"        : false,\n";
+            }
+            if(pWPolar->isT4Polar()){
+                out << "    \"isT4Polar\"         : true,\n";
+            }
+            else{
+                out << "    \"isT4Polar\"         : false,\n";
+            }
+            if(pWPolar->isT5Polar()){
+                out << "    \"isT5Polar\"         : true,\n";
+            }
+            else{
+                out << "    \"isT5Polar\"         : false,\n";
+            }
+            if(pWPolar->isT7Polar()){
+                out << "    \"isT7Polar\"         : true,\n";
+            }
+            else{
+                out << "    \"isT7Polar\"         : false,\n";
+            }
+            if(pWPolar->bThinSurfaces()){
+                out << "    \"bThinSurfaces\"     : true,\n";
+            }
+            else{
+                out << "    \"bThinSurfaces\"     : false,\n";
+            }
+            if(pWPolar->bWakeRollUp()){
+                out << "    \"bWakeRollUp\"       : true,\n";
+            }
+            else{
+                out << "    \"bWakeRollUp\"       : false,\n";
+            }
+            if(pWPolar->bTilted()){
+                out << "    \"bTilted\"           : true,\n";
+            }
+            else{
+                out << "    \"bTilted\"           : false,\n";
+            }
+            if(pWPolar->bGround()){
+                out << "    \"bGround\"           : true,\n";
+            }
+            else{
+                out << "    \"bGround\"           : false,\n";
+            }
+            if(pWPolar->bIgnoreBodyPanels()){
+                out << "    \"bIgnoreBodyPanels\" : true,\n";
+            }
+            else{
+                out << "    \"bIgnoreBodyPanels\" : false,\n";
+            }
+            if(pWPolar->bViscous()){
+                out << "    \"bViscous\"          : true,\n";
+            }
+            else{
+                out << "    \"bViscous\"          : false,\n";
+            }
+            if(pWPolar->bVLM1()){
+                out << "    \"bVLM1\"             : true,\n";
+            }
+            else{
+                out << "    \"bVLM1\"             : false,\n";
+            }
+            if(pWPolar->bAutoInertia()){
+                out << "    \"bAutoInertia\"      : true,\n";
+            }
+            else{
+                out << "    \"bAutoInertia\"      : false,\n";
+            }
+            if(pWPolar->bDirichlet()){
+                out << "    \"bDirichlet\"        : true,\n";
+            }
+            else{
+                out << "    \"bDirichlet\"        : false,\n";
+            }
+            if(pWPolar->bIncludeWing2Area()){
+                out << "    \"bIncludeWing2Area\" : true\n";
+            }
+            else{
+                out << "    \"bIncludeWing2Area\" : false\n";
+            }
+            out << "  },\n";
+
+
+
+            out << "  \"plane\":{\n";
+            out <<         "    \"PlaneName\"      : \"" + pWPolar->planeName() + "\",\n";
+            out << QString("    \"CoGIxx\"         : %1,\n").arg(pPlane->CoGIxx(),8,'f',4);
+            out << QString("    \"CoGIyy\"         : %1,\n").arg(pPlane->CoGIyy(),8,'f',4);
+            out << QString("    \"CoGIzz\"         : %1,\n").arg(pPlane->CoGIzz(),8,'f',4);
+            out << QString("    \"CoGIxz\"         : %1,\n").arg(pPlane->CoGIxz(),8,'f',4);
+            out << QString("    \"mac\"            : %1,\n").arg(pPlane->mac(),8,'f',4);
+            out << QString("    \"rootChord\"      : %1,\n").arg(pPlane->rootChord(),8,'f',4);
+            out << QString("    \"tipChord\"       : %1,\n").arg(pPlane->tipChord(),8,'f',4);
+            out <<         "    \"description\"    : \"" + pPlane->description() + "\",\n";
+            out << QString("    \"totalMass\"      : %1,\n").arg(pPlane->totalMass(),8,'f',4);
+            out << QString("    \"tailVolume\"     : %1,\n").arg(pPlane->tailVolume(),8,'f',4);
+            out << QString("    \"VLMPanelTotal\"  :%1,\n").arg(double(pPlane->VLMPanelTotal()),4,'f',0);
+
+
+            // out << QString("    \"projectedArea\"  : %1,\n").arg(pPlane->projectedArea(),8,'f',4);
+            // out << QString("    \"planformArea\"   : %1,\n").arg(pPlane->planformArea(),8,'f',4);
+            out << QString("    \"projectedSpan\"  : %1,\n").arg(pPlane->projectedSpan(),8,'f',4);
+            out << QString("    \"planformSpan\"   : %1,\n").arg(pPlane->planformSpan(),8,'f',4);
+            out << QString("    \"aspectRatio\"    : %1,\n").arg(pPlane->aspectRatio(),8,'f',4);
+            out << QString("    \"taperRatio\"     : %1,\n").arg(pPlane->taperRatio(),8,'f',4);
+
+
+            out << "    \"wing\":{\n";
+            out <<         "      \"name\"            : \"" + pWing->name() + "\",\n";
+            out <<         "      \"description\"     : \"" + pWing->wingDescription() + "\",\n";
+            if(pWing->isSymetric()){
+                out << "      \"isSymetric\"      : true,\n";}
+            else{
+                out << "      \"isSymetric\"      : false,\n";
+            }
+            out << QString("      \"surfaceCount\"    : %1,\n").arg(double(pWing->surfaceCount()),3,'f',0);
+            out << QString("      \"firstPanelIndex\" : %1,\n").arg(double(pWing->firstPanelIndex()),3,'f',0);
+            out << QString("      \"nPanels\"         : %1,\n").arg(double(pWing->nPanels()),3,'f',0);
+            out << QString("      \"nFlaps\"          : %1,\n").arg(double(pWing->nFlaps()),3,'f',0);
+            out << QString("      \"NStations\"       : %1,\n").arg(double(pWing->NStations()),3,'f',0);
+            out << QString("      \"CoGx\"            : %1,\n").arg(pWing->CoG().x,8,'f',4);
+            out << QString("      \"CoGy\"            : %1,\n").arg(pWing->CoG().y,8,'f',4);
+            out << QString("      \"CoGz\"            : %1,\n").arg(pWing->CoG().z,8,'f',4);
+            out << QString("      \"rootChord\"       : %1,\n").arg(pWing->rootChord(),8,'f',4);
+            out << QString("      \"rootOffset\"      : %1,\n").arg(pWing->rootOffset(),8,'f',4);
+            out << QString("      \"tipChord\"        : %1,\n").arg(pWing->tipChord(),8,'f',4);
+            out << QString("      \"tipTwist\"        : %1,\n").arg(pWing->tipTwist(),8,'f',4);
+            out << QString("      \"tipOffset\"       : %1,\n").arg(pWing->tipOffset(),8,'f',4);
+            out << QString("      \"tipPos\"          : %1,\n").arg(pWing->tipPos(),8,'f',4);
+            out << QString("      \"planformSpan\"    : %1,\n").arg(pWing->planformSpan(),8,'f',4);
+            out << QString("      \"projectedSpan\"   : %1,\n").arg(pWing->projectedSpan(),8,'f',4);
+            out << QString("      \"planformArea\"    : %1,\n").arg(pWing->planformArea(),8,'f',4);
+            out << QString("      \"projectedArea\"   : %1,\n").arg(pWing->projectedArea(),8,'f',4);
+            out << QString("      \"MAC\"             : %1,\n").arg(pWing->MAC(),8,'f',4);
+            out << QString("      \"GChord\"          : %1,\n").arg(pWing->GChord(),8,'f',4);
+            out << QString("      \"aspectRatio\"     : %1,\n").arg(pWing->aspectRatio(),8,'f',4);
+            out << QString("      \"taperRatio\"      : %1,\n").arg(pWing->taperRatio(),8,'f',4);
+            out << QString("      \"averageSweep\"    : %1,\n").arg(pWing->averageSweep(),8,'f',4);
+            out << QString("      \"volumeMass\"      : %1,\n").arg(pWing->volumeMass(),8,'f',4);
+            out << QString("      \"totalMass\"       : %1,\n").arg(pWing->totalMass(),8,'f',4);
+            out << QString("      \"minPanelSize\"    : %1\n").arg(pWing->minPanelSize(),8,'f',4);
+            out << "    },\n";
+
+            if(pPlane->hasElevator()){
+                pWing = pPlane->stab();
+                out << "    \"hasElevator\"    : true,\n";
+                out << "    \"elevator\":{\n";
+                out <<         "      \"name\"            : \"" + pWing->name() + "\",\n";
+                out <<         "      \"description\"     : \"" + pWing->wingDescription() + "\",\n";
+                if(pWing->isSymetric()){
+                    out << "      \"isSymetric\"      : true,\n";}
+                else{
+                    out << "      \"isSymetric\"      : false,\n";
+                }
+                out << QString("      \"surfaceCount\"    : %1,\n").arg(double(pWing->surfaceCount()),3,'f',0);
+                out << QString("      \"firstPanelIndex\" : %1,\n").arg(double(pWing->firstPanelIndex()),3,'f',0);
+                out << QString("      \"nPanels\"         : %1,\n").arg(double(pWing->nPanels()),3,'f',0);
+                out << QString("      \"nFlaps\"          : %1,\n").arg(double(pWing->nFlaps()),3,'f',0);
+                out << QString("      \"NStations\"       : %1,\n").arg(double(pWing->NStations()),3,'f',0);
+                out << QString("      \"CoGx\"            : %1,\n").arg(pWing->CoG().x,8,'f',4);
+                out << QString("      \"CoGy\"            : %1,\n").arg(pWing->CoG().y,8,'f',4);
+                out << QString("      \"CoGz\"            : %1,\n").arg(pWing->CoG().z,8,'f',4);
+                out << QString("      \"rootChord\"       : %1,\n").arg(pWing->rootChord(),8,'f',4);
+                out << QString("      \"rootOffset\"      : %1,\n").arg(pWing->rootOffset(),8,'f',4);
+                out << QString("      \"tipChord\"        : %1,\n").arg(pWing->tipChord(),8,'f',4);
+                out << QString("      \"tipTwist\"        : %1,\n").arg(pWing->tipTwist(),8,'f',4);
+                out << QString("      \"tipOffset\"       : %1,\n").arg(pWing->tipOffset(),8,'f',4);
+                out << QString("      \"tipPos\"          : %1,\n").arg(pWing->tipPos(),8,'f',4);
+                out << QString("      \"planformSpan\"    : %1,\n").arg(pWing->planformSpan(),8,'f',4);
+                out << QString("      \"projectedSpan\"   : %1,\n").arg(pWing->projectedSpan(),8,'f',4);
+                out << QString("      \"planformArea\"    : %1,\n").arg(pWing->planformArea(),8,'f',4);
+                out << QString("      \"projectedArea\"   : %1,\n").arg(pWing->projectedArea(),8,'f',4);
+                out << QString("      \"MAC\"             : %1,\n").arg(pWing->MAC(),8,'f',4);
+                out << QString("      \"GChord\"          : %1,\n").arg(pWing->GChord(),8,'f',4);
+                out << QString("      \"aspectRatio\"     : %1,\n").arg(pWing->aspectRatio(),8,'f',4);
+                out << QString("      \"taperRatio\"      : %1,\n").arg(pWing->taperRatio(),8,'f',4);
+                out << QString("      \"averageSweep\"    : %1,\n").arg(pWing->averageSweep(),8,'f',4);
+                out << QString("      \"volumeMass\"      : %1,\n").arg(pWing->volumeMass(),8,'f',4);
+                out << QString("      \"totalMass\"       : %1,\n").arg(pWing->totalMass(),8,'f',4);
+                out << QString("      \"minPanelSize\"    : %1\n").arg(pWing->minPanelSize(),8,'f',4);
+                out << "    },\n";
+            }
+            else{
+                out << "    \"hasElevator\"    : false,\n";
+            }
+
+            if(pPlane->hasFin()){
+                out << "    \"hasFin\"         : true,\n";
+
+                pWing = pPlane->fin();
+                out << "    \"fin\":{\n";
+                out <<         "      \"name\"            : \"" + pWing->name() + "\",\n";
+                out <<         "      \"description\"     : \"" + pWing->wingDescription() + "\",\n";
+                if(pWing->isSymetric()){
+                    out << "      \"isSymetric\"      : true,\n";}
+                else{
+                    out << "      \"isSymetric\"      : false,\n";
+                }
+                out << QString("      \"surfaceCount\"    : %1,\n").arg(double(pWing->surfaceCount()),3,'f',0);
+                out << QString("      \"firstPanelIndex\" : %1,\n").arg(double(pWing->firstPanelIndex()),3,'f',0);
+                out << QString("      \"nPanels\"         : %1,\n").arg(double(pWing->nPanels()),3,'f',0);
+                out << QString("      \"nFlaps\"          : %1,\n").arg(double(pWing->nFlaps()),3,'f',0);
+                out << QString("      \"NStations\"       : %1,\n").arg(double(pWing->NStations()),3,'f',0);
+                out << QString("      \"CoGx\"            : %1,\n").arg(pWing->CoG().x,8,'f',4);
+                out << QString("      \"CoGy\"            : %1,\n").arg(pWing->CoG().y,8,'f',4);
+                out << QString("      \"CoGz\"            : %1,\n").arg(pWing->CoG().z,8,'f',4);
+                out << QString("      \"rootChord\"       : %1,\n").arg(pWing->rootChord(),8,'f',4);
+                out << QString("      \"rootOffset\"      : %1,\n").arg(pWing->rootOffset(),8,'f',4);
+                out << QString("      \"tipChord\"        : %1,\n").arg(pWing->tipChord(),8,'f',4);
+                out << QString("      \"tipTwist\"        : %1,\n").arg(pWing->tipTwist(),8,'f',4);
+                out << QString("      \"tipOffset\"       : %1,\n").arg(pWing->tipOffset(),8,'f',4);
+                out << QString("      \"tipPos\"          : %1,\n").arg(pWing->tipPos(),8,'f',4);
+                out << QString("      \"planformSpan\"    : %1,\n").arg(pWing->planformSpan(),8,'f',4);
+                out << QString("      \"projectedSpan\"   : %1,\n").arg(pWing->projectedSpan(),8,'f',4);
+                out << QString("      \"planformArea\"    : %1,\n").arg(pWing->planformArea(),8,'f',4);
+                out << QString("      \"projectedArea\"   : %1,\n").arg(pWing->projectedArea(),8,'f',4);
+                out << QString("      \"MAC\"             : %1,\n").arg(pWing->MAC(),8,'f',4);
+                out << QString("      \"GChord\"          : %1,\n").arg(pWing->GChord(),8,'f',4);
+                out << QString("      \"aspectRatio\"     : %1,\n").arg(pWing->aspectRatio(),8,'f',4);
+                out << QString("      \"taperRatio\"      : %1,\n").arg(pWing->taperRatio(),8,'f',4);
+                out << QString("      \"averageSweep\"    : %1,\n").arg(pWing->averageSweep(),8,'f',4);
+                out << QString("      \"volumeMass\"      : %1,\n").arg(pWing->volumeMass(),8,'f',4);
+                out << QString("      \"totalMass\"       : %1,\n").arg(pWing->totalMass(),8,'f',4);
+                out << QString("      \"minPanelSize\"    : %1\n").arg(pWing->minPanelSize(),8,'f',4);
+                out << "    },\n";
+            }
+            else{
+                out << "    \"hasFin\"         : false,\n";
+            }
+            if(pPlane->hasBody()){
+                out << "    \"hasBody\"        : true,\n";
+            }
+            else{
+                out << "    \"hasBody\"        : false,\n";
+            }
+            if(pPlane->hasSecondWing()){
+                out << "    \"hasSecondWing\"  : true\n";}
+            else{
+                out << "    \"hasSecondWing\"  : false\n";
+            }
+
+            out << "  },\n";
+
+        }
+
+        out << "  \"points\":[\n";
+
+
+        for (int j=0; j<pWPolar->dataSize(); j++)
+        {
+            // strong.Format(" %8.3f,  %9.6f,  %9.6f,  %9.6f,  %9.6f,  %9.6f,  %9.6f,  %9.6f,  %9.6f,  %9.6f,  %8.4f,  %9.4f\n",
+            // strong = QString(" %1,  %2,  %3,  %4,  %5,  %6,  %7,  %8,  %9,  %10,  %11,  %12,  %13,  %14,  %15,  %16,  %17,  %18,  %19,  %20,  %21,  %22,  %23,  %24,  %25,  %26,  %27,  %28,  %29,  %30,  %31,  %32,  %33,  %34,  %35,  %36,  %37,  %38,  %39,  %40,  %41,  %42,  %43,  %44,  %45,  %46,  %47,  %48,  %49\n")
+            strong = QString("    {\n"
+                             "      \"polar\"               : %1,\n"
+                             "      \"Alpha\"               : %2,\n"
+                             "      \"Beta\"                : %3,\n"
+                             "      \"CL\"                  : %4,\n"
+                             "      \"CY\"                  : %5,\n"
+                             "      \"Cl32Cd\"              : %6,\n"
+                             "      \"ClCd\"                : %7,\n"
+                             "      \"CoG_x\"               : %8,\n"
+                             "      \"CoG_z\"               : %9,\n"
+                             "      \"Ctrl\"                : %10,\n"
+                             "      \"DutchRollDamping\"    : %11,\n"
+                             "      \"DutchRollFrequency\"  : %12,\n"
+                             "      \"ExtraDrag\"           : %13,\n"
+                             "      \"FX\"                  : %14,\n"
+                             "      \"FY\"                  : %15,\n"
+                             "      \"FZ\"                  : %16,\n"
+                             "      \"GCm\"                 : %17,\n"
+                             "      \"GRm\"                 : %18,\n"
+                             "      \"GYm\"                 : %19,\n"
+                             "      \"Gamma\"               : %20,\n"
+                             "      \"HorizontalPower\"     : %21,\n"
+                             "      \"ICd\"                 : %22,\n"
+                             "      \"ICm\"                 : %23,\n"
+                             "      \"Ym\"                  : %24,\n"
+                             "      \"Mass_var\"            : %25,\n"
+                             "      \"MaxBending\"          : %26,\n"
+                             "      \"Oswald\"              : %27,\n"
+                             "      \"PCd\"                 : %28,\n"
+                             "      \"PhugoidDamping\"      : %29,\n"
+                             "      \"PhugoidFrequency\"    : %30,\n"
+                             "      \"Pm\"                  : %31,\n"
+                             "      \"QInfinite\"           : %32,\n"
+                             "      \"Rm\"                  : %33,\n"
+                             "      \"RollDampingT2\"       : %34,\n"
+                             "      \"SM\"                  : %35,\n"
+                             "      \"ShortPeriodDamping\"  : %36,\n"
+                             "      \"ShortPeriodFrequency\": %37,\n"
+                             "      \"SpiralDampingT2\"     : %38,\n"
+                             "      \"TCd\"                 : %39,\n"
+                             "      \"VCm\"                 : %40,\n"
+                             "      \"VYm\"                 : %41,\n"
+                             "      \"VertPower\"           : %42,\n"
+                             "      \"Vx\"                  : %43,\n"
+                             "      \"Vz\"                  : %44,\n"
+                             "      \"XCP\"                 : %45,\n"
+                             "      \"XCpCl\"               : %46,\n"
+                             "      \"XNP\"                 : %47,\n"
+                             "      \"YCP\"                 : %48,\n"
+                             "      \"1Cl\"                 : %49,\n"
+                             "      \"ZCP\"                 : %50\n"
+                             "    }"
+            )
+            .arg(double(j+1),3,'f',0)
+            .arg(pWPolar->m_Alpha[j],8,'f',4)
+            .arg(pWPolar->m_Beta[j],8,'f',4)
+            .arg(pWPolar->m_CL[j],8,'f',4)
+            .arg(pWPolar->m_CY[j],8,'f',4)
+            .arg(pWPolar->m_Cl32Cd[j],8,'f',4)
+            .arg(pWPolar->m_ClCd[j],8,'f',4)
+            .arg(pWPolar->m_CoG_x[j],8,'f',4)
+            .arg(pWPolar->m_CoG_z[j],8,'f',4)
+            .arg(pWPolar->m_Ctrl[j],8,'f',4)
+            .arg(pWPolar->m_DutchRollDamping[j],8,'f',4)
+            .arg(pWPolar->m_DutchRollFrequency[j],8,'f',4)
+            .arg(pWPolar->m_ExtraDrag[j],8,'f',4)
+            .arg(pWPolar->m_FX[j],8,'f',4)
+            .arg(pWPolar->m_FY[j],8,'f',4)
+            .arg(pWPolar->m_FZ[j],8,'f',4)
+            .arg(pWPolar->m_GCm[j],8,'f',4)
+            .arg(pWPolar->m_GRm[j],8,'f',4)
+            .arg(pWPolar->m_GYm[j],8,'f',4)
+            .arg(pWPolar->m_Gamma[j],8,'f',4)
+            .arg(pWPolar->m_HorizontalPower[j],8,'f',4)
+            .arg(pWPolar->m_ICd[j],8,'f',4)
+            .arg(pWPolar->m_ICm[j],8,'f',4)
+            .arg(pWPolar->m_Ym[j],8,'f',4)
+            .arg(pWPolar->m_Mass_var[j],8,'f',4)
+            .arg(pWPolar->m_MaxBending[j],8,'f',4)
+            .arg(pWPolar->m_Oswald[j],8,'f',4)
+            .arg(pWPolar->m_PCd[j],8,'f',4)
+            .arg(pWPolar->m_PhugoidDamping[j],8,'f',4)
+            .arg(pWPolar->m_PhugoidFrequency[j],8,'f',4)
+            .arg(pWPolar->m_Pm[j],8,'f',4)
+            .arg(pWPolar->m_QInfinite[j],8,'f',4)
+            .arg(pWPolar->m_Rm[j],8,'f',4)
+            .arg(pWPolar->m_RollDampingT2[j],8,'f',4)
+            .arg(pWPolar->m_SM[j],8,'f',4)
+            .arg(pWPolar->m_ShortPeriodDamping[j],8,'f',4)
+            .arg(pWPolar->m_ShortPeriodFrequency[j],8,'f',4)
+            .arg(pWPolar->m_SpiralDampingT2[j],8,'f',4)
+            .arg(pWPolar->m_TCd[j],8,'f',4)
+            .arg(pWPolar->m_VCm[j],8,'f',4)
+            .arg(pWPolar->m_VYm[j],8,'f',4)
+            .arg(pWPolar->m_VertPower[j],8,'f',4)
+            .arg(pWPolar->m_Vx[j],8,'f',4)
+            .arg(pWPolar->m_Vz[j],8,'f',4)
+            .arg(pWPolar->m_XCP[j],8,'f',4)
+            .arg(pWPolar->m_XCpCl[j],8,'f',4)
+            .arg(pWPolar->m_XNP[j],8,'f',4)
+            .arg(pWPolar->m_YCP[j],8,'f',4)
+            .arg(pWPolar->m_1Cl[j],8,'f',4)
+            .arg(pWPolar->m_ZCP[j],8,'f',4);
+
+
+            if(j < pWPolar->dataSize()-1){
+                strong += ",";
+            }
+            strong += "\n";
+
+            out << strong;
+        }
+        strong="  ]\n";
+        out << strong;
+
+        strong="}\n\n";
+        out << strong;
+    }
 
 
 /**
