@@ -37,6 +37,7 @@ TARGET = xflr5
 
 # The path to the libraries' header files required by the code at compile time
 INCLUDEPATH += $$PWD/../XFoil-lib/
+INCLUDEPATH += $$PWD/../rpclib/include
 # Forces re-build if a library header or source file has been modified
 DEPENDPATH += $$PWD/../XFoil-lib/
 

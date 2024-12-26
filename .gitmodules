@@ -1,0 +1,3 @@
+[submodule "xflr5/rpclib"]
+	path = xflr5/rpclib
+	url = https://github.com/rpclib/rpclib

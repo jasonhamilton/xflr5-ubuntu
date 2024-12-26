@@ -8479,89 +8479,89 @@ void Miarex::updateTreeView()
 
 void Miarex::onDefineWPolarHeadless(WPolar* pNewWPolar, Plane* plane)
 {
-    if(!plane) return;
+    // if(!plane) return;
 
-    stopAnimate();
+    // stopAnimate();
 
-    // WPolar *pNewWPolar = new WPolar;
+    // // WPolar *pNewWPolar = new WPolar;
 
-    if (true)
-    {
-        //Then add WPolar to array
-        emit projectModified();
-        // pNewWPolar->duplicateSpec(&wpolar);
-        pNewWPolar->setPlaneName(plane->name());
-        // pNewWPolar->setPolarName(wpolar.polarName());
+    // if (true)
+    // {
+    //     //Then add WPolar to array
+    //     emit projectModified();
+    //     // pNewWPolar->duplicateSpec(&wpolar);
+    //     pNewWPolar->setPlaneName(plane->name());
+    //     // pNewWPolar->setPolarName(wpolar.polarName());
 
-        if(pNewWPolar->referenceDim()==xfl::PLANFORMREFDIM)
-        {
-            pNewWPolar->setReferenceSpanLength(plane->planformSpan());
-            double area = plane->planformArea();
-            if(plane && plane->biPlane()) area += plane->wing2()->m_PlanformArea;
-            pNewWPolar->setReferenceArea(area);
-        }
-        else if(pNewWPolar->referenceDim()==xfl::PROJECTEDREFDIM)
-        {
-            pNewWPolar->setReferenceSpanLength(plane->projectedSpan());
-            double area = plane->projectedArea();
-            if(plane && plane->biPlane()) area += plane->wing2()->m_ProjectedArea;
-            pNewWPolar->setReferenceArea(area);
-        }
+    //     if(pNewWPolar->referenceDim()==xfl::PLANFORMREFDIM)
+    //     {
+    //         pNewWPolar->setReferenceSpanLength(plane->planformSpan());
+    //         double area = plane->planformArea();
+    //         if(plane && plane->biPlane()) area += plane->wing2()->m_PlanformArea;
+    //         pNewWPolar->setReferenceArea(area);
+    //     }
+    //     else if(pNewWPolar->referenceDim()==xfl::PROJECTEDREFDIM)
+    //     {
+    //         pNewWPolar->setReferenceSpanLength(plane->projectedSpan());
+    //         double area = plane->projectedArea();
+    //         if(plane && plane->biPlane()) area += plane->wing2()->m_ProjectedArea;
+    //         pNewWPolar->setReferenceArea(area);
+    //     }
 
-        // chord wasn't set in the original method, because it's mac by default. so added this line her
-        pNewWPolar->setReferenceChordLength(plane->mac());
+    //     // chord wasn't set in the original method, because it's mac by default. so added this line her
+    //     pNewWPolar->setReferenceChordLength(plane->mac());
 
-        if(m_bDirichlet) pNewWPolar->setBoundaryCondition(xfl::DIRICHLET);
-        else             pNewWPolar->setBoundaryCondition(xfl::NEUMANN);
-
-
-        // analysis method
-        // taken from polar dialog onMethod() slot
-        if (pNewWPolar->analysisMethod() == xfl::LLTMETHOD)
-        {
-            pNewWPolar->setViscous(true);
-            pNewWPolar->setThinSurfaces(true);
-            pNewWPolar->setWakeRollUp(false);
-            pNewWPolar->setTilted(false);
-            pNewWPolar->setAnalysisMethod(xfl::LLTMETHOD);
-        }
-        else if (pNewWPolar->analysisMethod() == xfl::VLMMETHOD)
-        {
-            pNewWPolar->setVLM1(true);
-            pNewWPolar->setThinSurfaces(true);
-            pNewWPolar->setAnalysisMethod(xfl::PANEL4METHOD);
-        }
-        else if (pNewWPolar->analysisMethod() == xfl::PANEL4METHOD)
-        {
-            pNewWPolar->setThinSurfaces(false);
-            pNewWPolar->setAnalysisMethod(xfl::PANEL4METHOD);
-        }
+    //     if(m_bDirichlet) pNewWPolar->setBoundaryCondition(xfl::DIRICHLET);
+    //     else             pNewWPolar->setBoundaryCondition(xfl::NEUMANN);
 
 
-        QColor clr = xfl::getObjectColor(4);
-        pNewWPolar->setColor(clr);
-        if(DisplayOptions::isAlignedChildrenStyle()) pNewWPolar->setTheStyle(plane->theStyle());
+    //     // analysis method
+    //     // taken from polar dialog onMethod() slot
+    //     if (pNewWPolar->analysisMethod() == xfl::LLTMETHOD)
+    //     {
+    //         pNewWPolar->setViscous(true);
+    //         pNewWPolar->setThinSurfaces(true);
+    //         pNewWPolar->setWakeRollUp(false);
+    //         pNewWPolar->setTilted(false);
+    //         pNewWPolar->setAnalysisMethod(xfl::LLTMETHOD);
+    //     }
+    //     else if (pNewWPolar->analysisMethod() == xfl::VLMMETHOD)
+    //     {
+    //         pNewWPolar->setVLM1(true);
+    //         pNewWPolar->setThinSurfaces(true);
+    //         pNewWPolar->setAnalysisMethod(xfl::PANEL4METHOD);
+    //     }
+    //     else if (pNewWPolar->analysisMethod() == xfl::PANEL4METHOD)
+    //     {
+    //         pNewWPolar->setThinSurfaces(false);
+    //         pNewWPolar->setAnalysisMethod(xfl::PANEL4METHOD);
+    //     }
 
-        m_pCurWPolar = Objects3d::insertNewWPolar(pNewWPolar, plane);
-        m_pCurPOpp = nullptr;
-        setWPolar(pNewWPolar);
-        m_pPlaneTreeView->insertWPolar(pNewWPolar);
-        m_pPlaneTreeView->selectWPolar(pNewWPolar, false);
-        m_pCurPOpp = nullptr;
 
-        gl3dMiarexView::s_bResetglGeom = true;
-        gl3dMiarexView::s_bResetglMesh = true;
-        gl3dMiarexView::s_bResetglOpp  = true;
-        gl3dMiarexView::s_bResetglWake = true;
+    //     QColor clr = xfl::getObjectColor(4);
+    //     pNewWPolar->setColor(clr);
+    //     if(DisplayOptions::isAlignedChildrenStyle()) pNewWPolar->setTheStyle(plane->theStyle());
 
-        updateView();
-        m_ppbAnalyze->setFocus();
-    }
-    else
-    {
-        delete pNewWPolar;
-    }
-    setControls();
+    //     m_pCurWPolar = Objects3d::insertNewWPolar(pNewWPolar, plane);
+    //     m_pCurPOpp = nullptr;
+    //     setWPolar(pNewWPolar);
+    //     m_pPlaneTreeView->insertWPolar(pNewWPolar);
+    //     m_pPlaneTreeView->selectWPolar(pNewWPolar, false);
+    //     m_pCurPOpp = nullptr;
+
+    //     gl3dMiarexView::s_bResetglGeom = true;
+    //     gl3dMiarexView::s_bResetglMesh = true;
+    //     gl3dMiarexView::s_bResetglOpp  = true;
+    //     gl3dMiarexView::s_bResetglWake = true;
+
+    //     updateView();
+    //     m_ppbAnalyze->setFocus();
+    // }
+    // else
+    // {
+    //     delete pNewWPolar;
+    // }
+    // setControls();
 }
 
 void Miarex::setAnalysisParamsHeadless(RpcLibAdapters::AnalysisSettings3D& analysis_settings)
