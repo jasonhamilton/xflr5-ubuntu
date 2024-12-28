@@ -6,3 +6,11 @@ xflr5/XFoil-lib/*.so*
 xflr5/xflr5v6/moc/
 xflr5/xflr5v6/rcc/
 xflr5/xflr5v6/xflr5
+xflr5/build/
+xflr5/.qtc_clangd/*
+xflr5/xflr5.app
+.DS_Store
+Makefile
+.qmake.stash
+*.pro.user
+xflr5/rpclib

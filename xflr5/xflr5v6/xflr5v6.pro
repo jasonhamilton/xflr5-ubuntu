@@ -25,7 +25,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 VERSION = 6.61
 
 CONFIG += qt
-QT += widgets opengl xml
+QT += widgets opengl xml testlib
 
 greaterThan(QT_VERSION, 6)  {
    QT += openglwidgets
@@ -122,8 +122,10 @@ macx{
 QMAKE_CFLAGS_WARN_ON -= -W3
 QMAKE_CFLAGS_WARN_ON += -W4
 
-LIBS += -L../XFoil-lib -lXFoil
 
+INCLUDEPATH += "../rpclib/include/"
+LIBS += -L../rpclib/build/ -lrpc
+LIBS += -L../XFoil-lib -lXFoil
 
 include(xflr5v6.pri)
 include(xfl3d/xfl3d.pri)
@@ -134,8 +136,5 @@ include(xflobjects/xflobjects.pri)
 include(xflscript/xflscript.pri)
 include(xflwidgets/xflwidgets.pri)
 include(xflanalysis/xflanalysis.pri)
-
-
-
-
+include(xflserver/xflserver.pri)
 

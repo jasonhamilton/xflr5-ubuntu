@@ -4433,7 +4433,7 @@ void XDirect::onExportXMLAnalysis()
 void XDirect::onOptim2d()
 {
     Optim2d o2d(s_pMainFrame);
-    o2d.setFoil(curFoil());   
+    o2d.setFoil(curFoil());
     o2d.exec();
     if(o2d.isModified())
     {
@@ -4508,8 +4508,8 @@ void XDirect::onSetAnalysisSettings2DHeadless(RpcLibAdapters::AnalysisSettings2D
     }
     onSpec();
 
-    m_pchViscous->setChecked(analysis_settings->viscous);
-    onViscous();
+    // m_pchViscous->setChecked(analysis_settings->viscous);
+    // onViscous();
 
     s_bKeepOpenErrors = analysis_settings->keep_open_on_error;
 }
